@@ -81,8 +81,24 @@
       return i >= 0 ? h.slice(0, i) + FOTO_FALLBACK + h.slice(i) : h + FOTO_FALLBACK;
     } catch (e) { return h; }
   }
+  // Aanvulling 23-11-2026: draairichting kamerdeuren omgedraaid. De tekening blijft gelijk;
+  // wat eerst "Linksdraaiend" heette heet nu "Rechtsdraaiend" en andersom. Keukenkastjes blijven ongewijzigd.
+  function patchDeur(h) {
+    try {
+      if (h.indexOf('__deurDraaiOm23112026') >= 0) return h;
+      h = h.replace(/\.mir \? 'r' : 'l'/g, ".mir ? 'l' : 'r'");
+      h = h.replace(/\.mir = v === 'r'/g, ".mir = v === 'l'");
+      h = h.replace(/\.mir \? '([Rr])echtsdraaiend' : '([Ll])inksdraaiend'/g, ".mir ? '$2inksdraaiend' : '$1echtsdraaiend'");
+      h = h.replace(/\.mir \? '([Ll])inksdraaiend' : '([Rr])echtsdraaiend'/g, ".mir ? '$2echtsdraaiend' : '$1inksdraaiend'");
+      h = h.split("hn.textContent = 'Linksdraaiend = scharnier links. Rechtsdraaiend = scharnier rechts.';").join("hn.textContent = it.type === 'deur' ? '' : 'Linksdraaiend = scharnier links. Rechtsdraaiend = scharnier rechts.';");
+      h = h.split("'<div class=\"read\">Linksdraaiend = scharnier links, rechtsdraaiend = scharnier rechts (gezien van voren).</div>'").join("(it.type === 'deur' ? '' : '<div class=\"read\">Linksdraaiend = scharnier links, rechtsdraaiend = scharnier rechts (gezien van voren).</div>')");
+      var i = h.indexOf('<script>');
+      return i >= 0 ? h.slice(0, i + 8) + '/*__deurDraaiOm23112026*/' + h.slice(i + 8) : h;
+    } catch (e) { return h; }
+  }
   function openApp(html) {
     html = patchApp(html);
+    html = patchDeur(html);
     window.__OPNAME_LOCK = function () { lsSet(null); location.reload(); };
     document.open(); document.write(html); document.close();
   }
